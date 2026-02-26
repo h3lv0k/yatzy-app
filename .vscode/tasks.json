@@ -1,0 +1,57 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Server",
+      "type": "shell",
+      "command": "npm.cmd",
+      "args": ["run", "dev"],
+      "options": {
+        "cwd": "${workspaceFolder}/server",
+        "env": {
+          "PATH": "${env:PATH};C:\\Program Files\\nodejs"
+        }
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": { "regexp": "." },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "ts-node-dev",
+          "endsPattern": "running on port"
+        }
+      },
+      "group": "build"
+    },
+    {
+      "label": "Start Client",
+      "type": "shell",
+      "command": "npm.cmd",
+      "args": ["run", "dev"],
+      "options": {
+        "cwd": "${workspaceFolder}/client",
+        "env": {
+          "PATH": "${env:PATH};C:\\Program Files\\nodejs"
+        }
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": { "regexp": "." },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "vite",
+          "endsPattern": "ready in"
+        }
+      },
+      "group": "build"
+    },
+    {
+      "label": "Start Yatzy (Server + Client)",
+      "dependsOn": ["Start Server", "Start Client"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,123 @@
+.board {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(160deg, #1a1a2e 0%, #0f3460 100%);
+  padding-bottom: 24px;
+}
+
+.board-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(0,0,0,0.3);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.turn-indicator {
+  font-weight: 700;
+  font-size: 15px;
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+.turn-indicator--mine {
+  background: rgba(255,215,0,0.15);
+  color: #ffd700;
+}
+
+.turn-indicator--theirs {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.6);
+}
+
+.score-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.my-score { color: #ffd700; }
+.opp-score { color: rgba(255,255,255,0.7); }
+.vs { color: rgba(255,255,255,0.3); font-size: 12px; }
+
+.alert {
+  margin: 8px 16px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  text-align: center;
+}
+
+.alert--error {
+  background: rgba(255,60,60,0.15);
+  border: 1px solid rgba(255,60,60,0.3);
+  color: #ff6b6b;
+}
+
+.alert--warn {
+  background: rgba(255,165,0,0.15);
+  border: 1px solid rgba(255,165,0,0.3);
+  color: #ffa500;
+}
+
+.dice-section {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.rolls-label {
+  font-size: 13px;
+  color: rgba(255,255,255,0.55);
+  text-align: center;
+}
+
+.dice-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  padding: 8px 0 24px;
+}
+
+.roll-btn {
+  padding: 14px 32px;
+  border: none;
+  border-radius: 28px;
+  background: linear-gradient(135deg, #ffd700, #ffaa00);
+  color: #1a1a2e;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  box-shadow: 0 4px 16px rgba(255,170,0,0.35);
+}
+
+.roll-btn:active { transform: scale(0.96); }
+.roll-btn--disabled {
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.3);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.wait-text {
+  color: rgba(255,255,255,0.4);
+  font-size: 14px;
+  animation: pulse 1.5s ease infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.scorecard-section {
+  padding: 0 12px;
+}
