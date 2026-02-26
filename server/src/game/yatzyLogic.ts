@@ -1,4 +1,4 @@
-import { ScoreCategory, ScoreSheet } from './types';
+import { ScoreCategory, ScoreSheet } from '../types';
 
 export function rollDie(): number {
   return Math.floor(Math.random() * 6) + 1;
