@@ -82,7 +82,7 @@ export const ScoreCard: React.FC<Props> = ({
                 key={p.id}
                 className={`player-header ${p.id === currentPlayerId ? 'player-header--active' : ''} ${p.id === myId ? 'player-header--me' : ''}`}
               >
-                {p.id === myId ? '👤 ' : '🤖 '}{p.name}
+                {p.avatar} {p.name}
               </th>
             ))}
           </tr>

@@ -66,12 +66,12 @@ export function useSocket() {
     return () => { socket.disconnect(); };
   }, []);
 
-  const createRoom = useCallback((name: string) => {
-    socketRef.current?.emit('create_room', { name });
+  const createRoom = useCallback((name: string, avatar: string) => {
+    socketRef.current?.emit('create_room', { name, avatar });
   }, []);
 
-  const joinRoom = useCallback((code: string, name: string) => {
-    socketRef.current?.emit('join_room', { code, name });
+  const joinRoom = useCallback((code: string, name: string, avatar: string) => {
+    socketRef.current?.emit('join_room', { code, name, avatar });
   }, []);
 
   const rollDice = useCallback(() => {

@@ -28,6 +28,7 @@ export interface ScoreSheet {
 export interface Player {
   id: string;
   name: string;
+  avatar: string;
   scores: ScoreSheet;
   totalScore: number;
   upperBonus: boolean;

@@ -28,8 +28,8 @@ function generateCode(): string {
   return Math.random().toString(36).substring(2, 7).toUpperCase();
 }
 
-function createPlayer(id: string, name: string): Player {
-  return { id, name, scores: {}, totalScore: 0, upperBonus: false };
+function createPlayer(id: string, name: string, avatar: string): Player {
+  return { id, name, avatar, scores: {}, totalScore: 0, upperBonus: false };
 }
 
 function initialGameState(roomId: string): GameState {
@@ -67,7 +67,7 @@ io.on('connection', (socket: Socket) => {
   }
 
   // Create a room
-  socket.on('create_room', ({ name }: { name: string }) => safeHandler('create_room', () => {
+  socket.on('create_room', ({ name, avatar }: { name: string; avatar?: string }) => safeHandler('create_room', () => {
     if (!name || typeof name !== 'string' || !name.trim()) {
       socket.emit('error', { message: 'Введите имя игрока' });
       return;
@@ -87,7 +87,7 @@ io.on('connection', (socket: Socket) => {
 
     const code = generateCode();
     const roomId = uuidv4();
-    const player = createPlayer(socket.id, name.trim());
+    const player = createPlayer(socket.id, name.trim(), avatar?.trim() || '😀');
     const gameState = initialGameState(roomId);
     gameState.players.push(player);
 
@@ -102,7 +102,7 @@ io.on('connection', (socket: Socket) => {
   }));
 
   // Join a room
-  socket.on('join_room', ({ code, name }: { code: string; name: string }) => safeHandler('join_room', () => {
+  socket.on('join_room', ({ code, name, avatar }: { code: string; name: string; avatar?: string }) => safeHandler('join_room', () => {
     if (!code || typeof code !== 'string' || !code.trim()) {
       socket.emit('error', { message: 'Введите код комнаты' });
       return;
@@ -131,7 +131,7 @@ io.on('connection', (socket: Socket) => {
       return;
     }
 
-    const player = createPlayer(socket.id, name.trim());
+    const player = createPlayer(socket.id, name.trim(), avatar?.trim() || '😎');
     room.gameState.players.push(player);
     socketRoom.set(socket.id, upperCode);
     socket.join(upperCode);

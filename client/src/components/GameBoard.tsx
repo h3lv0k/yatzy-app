@@ -59,9 +59,9 @@ export const GameBoard: React.FC<Props> = ({
           {isMyTurn ? '⚡ Ваш ход' : `⏳ Ход: ${currentPlayer?.name}`}
         </div>
         <div className="score-summary">
-          <span className="my-score">👤 {me?.totalScore ?? 0}</span>
+          <span className="my-score">{me?.avatar ?? '👤'} {me?.totalScore ?? 0}</span>
           <span className="vs">vs</span>
-          <span className="opp-score">{opponent?.totalScore ?? 0} 🤖</span>
+          <span className="opp-score">{opponent?.totalScore ?? 0} {opponent?.avatar ?? '🤖'}</span>
         </div>
         <button className="surrender-btn" onClick={handleSurrenderClick}>🏳️ Сдаться</button>
       </div>

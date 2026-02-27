@@ -1,10 +1,16 @@
 import React, { useState } from 'react';
 import './Lobby.css';
 
+const AVATARS = [
+  '😀','😎','🤩','🥳','🤖','👻','🐱','🦊','🐸','🐼',
+  '🦁','🐯','🐻','🐺','🦄','🐲','🎃','🍀','⚡','🔥',
+  '🌈','💎','🎯','🏆','🎲','🚀','🎸','🎮','🧩','👾',
+];
+
 interface Props {
   defaultName: string;
-  onCreateRoom: (name: string) => void;
-  onJoinRoom: (code: string, name: string) => void;
+  onCreateRoom: (name: string, avatar: string) => void;
+  onJoinRoom: (code: string, name: string, avatar: string) => void;
   roomCode: string | null;
   error: string | null;
   connected: boolean;
@@ -16,15 +22,16 @@ export const Lobby: React.FC<Props> = ({
   const [name, setName] = useState(defaultName);
   const [joinCode, setJoinCode] = useState('');
   const [tab, setTab] = useState<'create' | 'join'>('create');
+  const [avatar, setAvatar] = useState('😀');
 
   const handleCreate = () => {
     if (!name.trim()) return;
-    onCreateRoom(name.trim());
+    onCreateRoom(name.trim(), avatar);
   };
 
   const handleJoin = () => {
     if (!name.trim() || !joinCode.trim()) return;
-    onJoinRoom(joinCode.trim(), name.trim());
+    onJoinRoom(joinCode.trim(), name.trim(), avatar);
   };
 
   return (
@@ -44,6 +51,22 @@ export const Lobby: React.FC<Props> = ({
             placeholder="Введи имя..."
             maxLength={20}
           />
+        </div>
+
+        <div className="field">
+          <label>Аватар</label>
+          <div className="avatar-preview">{avatar}</div>
+          <div className="avatar-grid">
+            {AVATARS.map((em) => (
+              <button
+                key={em}
+                className={`avatar-btn ${avatar === em ? 'avatar-btn--selected' : ''}`}
+                onClick={() => setAvatar(em)}
+              >
+                {em}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="tabs">
