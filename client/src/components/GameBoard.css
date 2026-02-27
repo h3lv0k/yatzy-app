@@ -107,6 +107,63 @@
   cursor: not-allowed;
 }
 
+.leave-btn--inline {
+  margin-left: 10px;
+  padding: 3px 10px;
+  border: 1px solid rgba(255,165,0,0.4);
+  border-radius: 10px;
+  background: rgba(255,165,0,0.1);
+  color: rgba(255,200,100,0.9);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.surrender-btn {
+  padding: 5px 10px;
+  border: 1px solid rgba(255,80,80,0.4);
+  border-radius: 14px;
+  background: rgba(255,60,60,0.1);
+  color: rgba(255,120,120,0.85);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.surrender-btn:active { transform: scale(0.95); }
+
+.surrender-confirm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 16px 4px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255,60,60,0.12);
+  border: 1px solid rgba(255,60,60,0.25);
+  color: rgba(255,255,255,0.85);
+  font-size: 13px;
+}
+.surrender-confirm__yes {
+  padding: 4px 14px;
+  border-radius: 10px;
+  border: none;
+  background: #e53935;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+.surrender-confirm__no {
+  padding: 4px 14px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.7);
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .wait-text {
   color: rgba(255,255,255,0.4);
   font-size: 14px;

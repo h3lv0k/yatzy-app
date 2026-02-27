@@ -7,9 +7,11 @@ interface Props {
   players: Player[];
   myId: string;
   onRematch: () => void;
+  onLeave: () => void;
+  error: string | null;
 }
 
-export const GameOver: React.FC<Props> = ({ winner, players, myId, onRematch }) => {
+export const GameOver: React.FC<Props> = ({ winner, players, myId, onRematch, onLeave, error }) => {
   const iWon = winner === myId;
   const winnerPlayer = players.find((p) => p.id === winner);
   const [p1, p2] = players;
@@ -33,6 +35,10 @@ export const GameOver: React.FC<Props> = ({ winner, players, myId, onRematch }) 
         <button className="rematch-btn" onClick={onRematch}>
           🎲 Реванш
         </button>
+        <button className="leave-btn" onClick={onLeave}>
+          🚪 Выйти в лобби
+        </button>
+        {error && <p className="gameover-error">{error}</p>}
       </div>
     </div>
   );

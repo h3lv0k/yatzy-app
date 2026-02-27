@@ -91,3 +91,25 @@
 }
 
 .rematch-btn:active { transform: scale(0.96); }
+
+.leave-btn {
+  margin-top: 8px;
+  padding: 10px 28px;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 28px;
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.55);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  width: 100%;
+}
+.leave-btn:active { transform: scale(0.96); }
+
+.gameover-error {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #ff6b6b;
+  text-align: center;
+}

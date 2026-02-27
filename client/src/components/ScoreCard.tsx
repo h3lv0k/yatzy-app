@@ -4,6 +4,7 @@ import {
   UPPER_CATEGORIES, LOWER_CATEGORIES, CATEGORY_LABELS,
 } from '../types/game';
 import { calculateScore, computeUpperTotal } from '../utils/yatzy';
+import { categoryIcons } from '../assets/icons/categoryIcons';
 import './ScoreCard.css';
 
 interface Props {
@@ -92,7 +93,10 @@ export const ScoreCard: React.FC<Props> = ({
           </tr>
           {UPPER_CATEGORIES.map((cat) => (
             <tr key={cat}>
-              <td className="cat-label">{CATEGORY_LABELS[cat]}</td>
+              <td className="cat-label">
+                {categoryIcons[cat] && <img src={categoryIcons[cat]} className="cat-icon" alt="" />}
+                {CATEGORY_LABELS[cat]}
+              </td>
               {players.map((p) => renderCell(p, cat))}
             </tr>
           ))}
@@ -118,7 +122,10 @@ export const ScoreCard: React.FC<Props> = ({
           </tr>
           {LOWER_CATEGORIES.map((cat) => (
             <tr key={cat}>
-              <td className="cat-label">{CATEGORY_LABELS[cat]}</td>
+              <td className="cat-label">
+                {categoryIcons[cat] && <img src={categoryIcons[cat]} className="cat-icon" alt="" />}
+                {CATEGORY_LABELS[cat]}
+              </td>
               {players.map((p) => renderCell(p, cat))}
             </tr>
           ))}

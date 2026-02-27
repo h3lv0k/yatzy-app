@@ -86,9 +86,25 @@ export function useSocket() {
     socketRef.current?.emit('score_category', { category });
   }, []);
 
+  const leaveRoom = useCallback(() => {
+    socketRef.current?.emit('leave_room');
+    setState((s) => ({
+      ...s,
+      gameState: null,
+      roomCode: null,
+      gameOver: null,
+      opponentDisconnected: false,
+      error: null,
+    }));
+  }, []);
+
   const rematch = useCallback(() => {
     socketRef.current?.emit('rematch');
   }, []);
 
-  return { state, createRoom, joinRoom, rollDice, toggleHold, scoreCategory, rematch };
+  const surrender = useCallback(() => {
+    socketRef.current?.emit('surrender');
+  }, []);
+
+  return { state, createRoom, joinRoom, rollDice, toggleHold, scoreCategory, rematch, surrender, leaveRoom };
 }

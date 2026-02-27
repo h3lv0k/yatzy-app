@@ -59,11 +59,35 @@ function updateWinner(state: GameState): void {
 io.on('connection', (socket: Socket) => {
   console.log(`[+] Connected: ${socket.id}`);
 
+  function safeHandler(name: string, fn: () => void) {
+    try { fn(); } catch (err) {
+      console.error(`[error] handler '${name}':`, err);
+      socket.emit('error', { message: 'Внутренняя ошибка сервера' });
+    }
+  }
+
   // Create a room
-  socket.on('create_room', ({ name }: { name: string }) => {
+  socket.on('create_room', ({ name }: { name: string }) => safeHandler('create_room', () => {
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      socket.emit('error', { message: 'Введите имя игрока' });
+      return;
+    }
+    // If already in a room — leave it first
+    const existingCode = socketRoom.get(socket.id);
+    if (existingCode) {
+      const existingRoom = rooms.get(existingCode);
+      if (existingRoom) {
+        existingRoom.gameState.players = existingRoom.gameState.players.filter((p) => p.id !== socket.id);
+        if (existingRoom.gameState.players.length === 0) rooms.delete(existingCode);
+        else io.to(existingCode).emit('player_disconnected', { id: socket.id });
+      }
+      socketRoom.delete(socket.id);
+      socket.leave(existingCode);
+    }
+
     const code = generateCode();
     const roomId = uuidv4();
-    const player = createPlayer(socket.id, name || 'Player 1');
+    const player = createPlayer(socket.id, name.trim());
     const gameState = initialGameState(roomId);
     gameState.players.push(player);
 
@@ -75,15 +99,27 @@ io.on('connection', (socket: Socket) => {
     socket.emit('room_created', { code, roomId, playerId: socket.id });
     socket.emit('game_state', gameState);
     console.log(`Room created: ${code} by ${name}`);
-  });
+  }));
 
   // Join a room
-  socket.on('join_room', ({ code, name }: { code: string; name: string }) => {
-    const upperCode = code.toUpperCase();
+  socket.on('join_room', ({ code, name }: { code: string; name: string }) => safeHandler('join_room', () => {
+    if (!code || typeof code !== 'string' || !code.trim()) {
+      socket.emit('error', { message: 'Введите код комнаты' });
+      return;
+    }
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      socket.emit('error', { message: 'Введите имя игрока' });
+      return;
+    }
+    const upperCode = code.toUpperCase().trim();
     const room = rooms.get(upperCode);
 
     if (!room) {
       socket.emit('error', { message: 'Комната не найдена' });
+      return;
+    }
+    if (room.gameState.players.some((p) => p.id === socket.id)) {
+      socket.emit('error', { message: 'Вы уже в этой комнате' });
       return;
     }
     if (room.gameState.players.length >= 2) {
@@ -95,7 +131,7 @@ io.on('connection', (socket: Socket) => {
       return;
     }
 
-    const player = createPlayer(socket.id, name || 'Player 2');
+    const player = createPlayer(socket.id, name.trim());
     room.gameState.players.push(player);
     socketRoom.set(socket.id, upperCode);
     socket.join(upperCode);
@@ -108,10 +144,10 @@ io.on('connection', (socket: Socket) => {
     io.to(upperCode).emit('game_started', { roomId: room.id });
     io.to(upperCode).emit('game_state', room.gameState);
     console.log(`${name} joined room ${upperCode}`);
-  });
+  }));
 
   // Roll dice
-  socket.on('roll_dice', () => {
+  socket.on('roll_dice', () => safeHandler('roll_dice', () => {
     const code = socketRoom.get(socket.id);
     if (!code) return;
     const room = rooms.get(code);
@@ -119,6 +155,7 @@ io.on('connection', (socket: Socket) => {
     const { gameState } = room;
 
     const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+    if (!currentPlayer) return;
     if (currentPlayer.id !== socket.id) {
       socket.emit('error', { message: 'Не ваш ход' });
       return;
@@ -137,34 +174,44 @@ io.on('connection', (socket: Socket) => {
     if (gameState.rollsLeft === 0) gameState.phase = 'scoring';
 
     io.to(code).emit('game_state', gameState);
-  });
+  }));
 
   // Toggle hold
-  socket.on('toggle_hold', ({ index }: { index: number }) => {
+  socket.on('toggle_hold', ({ index }: { index: number }) => safeHandler('toggle_hold', () => {
     const code = socketRoom.get(socket.id);
     if (!code) return;
     const room = rooms.get(code);
     if (!room) return;
     const { gameState } = room;
 
+    if (typeof index !== 'number' || index < 0 || index > 4) return;
     const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-    if (currentPlayer.id !== socket.id) return;
+    if (!currentPlayer || currentPlayer.id !== socket.id) return;
     if (gameState.rollsLeft === 3) return; // must roll first
     if (gameState.rollsLeft === 0) return; // must score
 
     gameState.heldDice[index] = !gameState.heldDice[index];
     io.to(code).emit('game_state', gameState);
-  });
+  }));
 
   // Score a category
-  socket.on('score_category', ({ category }: { category: ScoreCategory }) => {
+  socket.on('score_category', ({ category }: { category: ScoreCategory }) => safeHandler('score_category', () => {
     const code = socketRoom.get(socket.id);
     if (!code) return;
     const room = rooms.get(code);
     if (!room) return;
     const { gameState } = room;
 
+    if (!SCORE_CATEGORIES.includes(category)) {
+      socket.emit('error', { message: 'Неверная категория' });
+      return;
+    }
+    if (gameState.phase === 'finished') {
+      socket.emit('error', { message: 'Игра уже завершена' });
+      return;
+    }
     const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+    if (!currentPlayer) return;
     if (currentPlayer.id !== socket.id) {
       socket.emit('error', { message: 'Не ваш ход' });
       return;
@@ -206,16 +253,65 @@ io.on('connection', (socket: Socket) => {
     gameState.turn += 1;
 
     io.to(code).emit('game_state', gameState);
-  });
+  }));
+
+  // Leave room
+  socket.on('leave_room', () => safeHandler('leave_room', () => {
+    const code = socketRoom.get(socket.id);
+    if (!code) return;
+    const room = rooms.get(code);
+    socketRoom.delete(socket.id);
+    socket.leave(code);
+    if (!room) return;
+    room.gameState.players = room.gameState.players.filter((p) => p.id !== socket.id);
+    if (room.gameState.players.length === 0) {
+      rooms.delete(code);
+    } else {
+      io.to(code).emit('player_disconnected', { id: socket.id });
+    }
+  }));
+
+  // Surrender
+  socket.on('surrender', () => safeHandler('surrender', () => {
+    const code = socketRoom.get(socket.id);
+    if (!code) return;
+    const room = rooms.get(code);
+    if (!room) return;
+    const { gameState } = room;
+    if (gameState.phase === 'finished' || gameState.phase === 'waiting') return;
+
+    const opponent = gameState.players.find((p) => p.id !== socket.id);
+    if (!opponent) return;
+
+    gameState.phase = 'finished';
+    gameState.winner = opponent.id;
+
+    io.to(code).emit('game_state', gameState);
+    io.to(code).emit('game_over', {
+      winner: gameState.winner,
+      players: gameState.players,
+      surrendered: socket.id,
+    });
+  }));
 
   // Rematch
-  socket.on('rematch', () => {
+  socket.on('rematch', () => safeHandler('rematch', () => {
     const code = socketRoom.get(socket.id);
     if (!code) return;
     const room = rooms.get(code);
     if (!room) return;
     const { gameState } = room;
 
+    // Check both players are still connected
+    if (gameState.players.length < 2) {
+      socket.emit('error', { message: 'Противник уже покинул игру' });
+      return;
+    }
+    const opponentId = gameState.players.find((p) => p.id !== socket.id)?.id;
+    if (!opponentId || !socketRoom.has(opponentId)) {
+      socket.emit('error', { message: 'Противник уже покинул игру' });
+      return;
+    }
     // Reset scores, keep players
     gameState.players.forEach((p) => {
       p.scores = {} as ScoreSheet;
@@ -230,8 +326,9 @@ io.on('connection', (socket: Socket) => {
     gameState.turn = 0;
     gameState.winner = undefined;
 
+    io.to(code).emit('game_started');
     io.to(code).emit('game_state', gameState);
-  });
+  }));
 
   // Disconnect
   socket.on('disconnect', () => {
@@ -240,10 +337,11 @@ io.on('connection', (socket: Socket) => {
     if (!code) return;
     const room = rooms.get(code);
     if (!room) return;
+    // Remove disconnected player from game state
+    room.gameState.players = room.gameState.players.filter((p) => p.id !== socket.id);
     io.to(code).emit('player_disconnected', { id: socket.id });
     // Clean up room if empty
-    const remaining = room.gameState.players.filter((p) => p.id !== socket.id);
-    if (remaining.length === 0) {
+    if (room.gameState.players.length === 0) {
       rooms.delete(code);
     }
     console.log(`[-] Disconnected: ${socket.id} from room ${code}`);

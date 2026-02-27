@@ -8,7 +8,7 @@ import { ScoreCategory } from './types/game';
 import './App.css';
 
 function App() {
-  const { state, createRoom, joinRoom, rollDice, toggleHold, scoreCategory, rematch } = useSocket();
+  const { state, createRoom, joinRoom, rollDice, toggleHold, scoreCategory, rematch, surrender, leaveRoom } = useSocket();
   const { defaultName, haptic } = useTelegram();
 
   const { gameState, playerId, roomCode, error, gameOver, connected, opponentDisconnected } = state;
@@ -40,6 +40,8 @@ function App() {
         players={gameOver!.players}
         myId={playerId}
         onRematch={handleRematch}
+        onLeave={leaveRoom}
+        error={error}
       />
     );
   }
@@ -52,6 +54,8 @@ function App() {
         onRoll={handleRoll}
         onToggleHold={toggleHold}
         onScore={handleScore}
+        onSurrender={surrender}
+        onLeave={leaveRoom}
         error={error}
         opponentDisconnected={opponentDisconnected}
       />

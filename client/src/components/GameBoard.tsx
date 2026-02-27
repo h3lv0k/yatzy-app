@@ -10,13 +10,20 @@ interface Props {
   onRoll: () => void;
   onToggleHold: (i: number) => void;
   onScore: (cat: ScoreCategory) => void;
+  onSurrender: () => void;
+  onLeave: () => void;
   error: string | null;
   opponentDisconnected: boolean;
 }
 
 export const GameBoard: React.FC<Props> = ({
-  gameState, myId, onRoll, onToggleHold, onScore, error, opponentDisconnected,
+  gameState, myId, onRoll, onToggleHold, onScore, onSurrender, onLeave, error, opponentDisconnected,
 }) => {
+  const [confirmSurrender, setConfirmSurrender] = useState(false);
+
+  const handleSurrenderClick = () => setConfirmSurrender(true);
+  const handleSurrenderConfirm = () => { setConfirmSurrender(false); onSurrender(); };
+  const handleSurrenderCancel = () => setConfirmSurrender(false);
   const { players, currentPlayerIndex, dice, heldDice, rollsLeft, phase } = gameState;
   const currentPlayer = players[currentPlayerIndex];
   const isMyTurn = currentPlayer?.id === myId;
@@ -56,10 +63,22 @@ export const GameBoard: React.FC<Props> = ({
           <span className="vs">vs</span>
           <span className="opp-score">{opponent?.totalScore ?? 0} 🤖</span>
         </div>
+        <button className="surrender-btn" onClick={handleSurrenderClick}>🏳️ Сдаться</button>
       </div>
 
+      {confirmSurrender && (
+        <div className="surrender-confirm">
+          <span>Сдаться и завершить игру?</span>
+          <button className="surrender-confirm__yes" onClick={handleSurrenderConfirm}>Да</button>
+          <button className="surrender-confirm__no" onClick={handleSurrenderCancel}>Нет</button>
+        </div>
+      )}
+
       {opponentDisconnected && (
-        <div className="alert alert--warn">Противник отключился</div>
+        <div className="alert alert--warn">
+          Противник отключился
+          <button className="leave-btn leave-btn--inline" onClick={onLeave}>Выйти в лобби</button>
+        </div>
       )}
       {error && <div className="alert alert--error">{error}</div>}
 
