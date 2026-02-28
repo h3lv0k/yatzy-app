@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { GameState, ScoreCategory } from '../types/game';
 import { Die } from './Die';
 import { ScoreCard } from './ScoreCard';
@@ -30,22 +30,38 @@ export const GameBoard: React.FC<Props> = ({
   const [rolling, setRolling] = useState(false);
   const [waitingForRoll, setWaitingForRoll] = useState(false);
   const [prevDice, setPrevDice] = useState<number[]>(dice);
+  const rollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Detect roll — also clears the pending-roll lock
+  // Detect dice change — for animation
   useEffect(() => {
     if (JSON.stringify(dice) !== JSON.stringify(prevDice)) {
       setRolling(true);
-      setWaitingForRoll(false);
       setPrevDice(dice);
       const t = setTimeout(() => setRolling(false), 400);
       return () => clearTimeout(t);
     }
   }, [dice]);
 
+  // Clear waitingForRoll when rollsLeft changes (server confirmed the roll)
+  const prevRollsLeftRef = useRef(rollsLeft);
+  useEffect(() => {
+    if (rollsLeft !== prevRollsLeftRef.current) {
+      prevRollsLeftRef.current = rollsLeft;
+      setWaitingForRoll(false);
+      if (rollTimeoutRef.current) clearTimeout(rollTimeoutRef.current);
+    }
+  }, [rollsLeft]);
+
   // Clear waiting flag whenever it's no longer our turn (e.g. after scoring)
   useEffect(() => {
-    if (!isMyTurn) setWaitingForRoll(false);
+    if (!isMyTurn) {
+      setWaitingForRoll(false);
+      if (rollTimeoutRef.current) clearTimeout(rollTimeoutRef.current);
+    }
   }, [isMyTurn]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => () => { if (rollTimeoutRef.current) clearTimeout(rollTimeoutRef.current); }, []);
 
   const me = players.find((p) => p.id === myId);
   const opponent = players.find((p) => p.id !== myId);
@@ -55,6 +71,8 @@ export const GameBoard: React.FC<Props> = ({
   const handleRoll = () => {
     if (!canRoll) return;
     setWaitingForRoll(true);
+    // Safety fallback: clear lock after 3s in case server response is lost
+    rollTimeoutRef.current = setTimeout(() => setWaitingForRoll(false), 3000);
     onRoll();
   };
 
