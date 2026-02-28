@@ -53,7 +53,9 @@ function isTurnComplete(player: Player): boolean {
 function updateWinner(state: GameState): void {
   const [p0, p1] = state.players;
   if (!p0 || !p1) return;
-  state.winner = p0.totalScore >= p1.totalScore ? p0.id : p1.id;
+  if (p0.totalScore > p1.totalScore) state.winner = p0.id;
+  else if (p1.totalScore > p0.totalScore) state.winner = p1.id;
+  else state.winner = p0.id; // tie — player who started wins
 }
 
 io.on('connection', (socket: Socket) => {
@@ -312,13 +314,14 @@ io.on('connection', (socket: Socket) => {
       socket.emit('error', { message: 'Противник уже покинул игру' });
       return;
     }
-    // Reset scores, keep players
+    // Reset scores, keep players, alternate who goes first
+    const prevFirst = gameState.currentPlayerIndex;
     gameState.players.forEach((p) => {
       p.scores = {} as ScoreSheet;
       p.totalScore = 0;
       p.upperBonus = false;
     });
-    gameState.currentPlayerIndex = 0;
+    gameState.currentPlayerIndex = prevFirst === 0 ? 1 : 0;
     gameState.dice = [1, 1, 1, 1, 1];
     gameState.heldDice = [false, false, false, false, false];
     gameState.rollsLeft = 3;
@@ -337,12 +340,29 @@ io.on('connection', (socket: Socket) => {
     if (!code) return;
     const room = rooms.get(code);
     if (!room) return;
-    // Remove disconnected player from game state
-    room.gameState.players = room.gameState.players.filter((p) => p.id !== socket.id);
-    io.to(code).emit('player_disconnected', { id: socket.id });
-    // Clean up room if empty
-    if (room.gameState.players.length === 0) {
+
+    const { gameState } = room;
+    const wasActive = gameState.phase !== 'waiting' && gameState.phase !== 'finished';
+
+    // Remove disconnected player
+    gameState.players = gameState.players.filter((p) => p.id !== socket.id);
+
+    if (gameState.players.length === 0) {
       rooms.delete(code);
+    } else {
+      // Mark game as finished so remaining player gets a clean state
+      if (wasActive) {
+        gameState.phase = 'finished';
+        gameState.winner = gameState.players[0]?.id;
+        gameState.currentPlayerIndex = 0;
+        io.to(code).emit('game_state', gameState);
+        io.to(code).emit('game_over', {
+          winner: gameState.winner,
+          players: gameState.players,
+          opponentLeft: true,
+        });
+      }
+      io.to(code).emit('player_disconnected', { id: socket.id });
     }
     console.log(`[-] Disconnected: ${socket.id} from room ${code}`);
   });

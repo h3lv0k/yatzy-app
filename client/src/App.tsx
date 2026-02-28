@@ -42,6 +42,8 @@ function App() {
         onRematch={handleRematch}
         onLeave={leaveRoom}
         error={error}
+        surrendered={gameOver!.surrendered}
+        opponentLeft={gameOver!.opponentLeft}
       />
     );
   }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Lobby.css';
 
 const AVATARS = [
@@ -23,6 +23,11 @@ export const Lobby: React.FC<Props> = ({
   const [joinCode, setJoinCode] = useState('');
   const [tab, setTab] = useState<'create' | 'join'>('create');
   const [avatar, setAvatar] = useState('😀');
+
+  // Sync Telegram name if it arrives after first render
+  useEffect(() => {
+    if (defaultName) setName(defaultName);
+  }, [defaultName]);
 
   const handleCreate = () => {
     if (!name.trim()) return;

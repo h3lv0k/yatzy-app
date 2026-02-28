@@ -4,45 +4,77 @@ import { GameState, ScoreCategory } from '../types/game';
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
 
+const INITIAL_STATE: SocketState = {
+  connected: false,
+  gameState: null,
+  roomCode: null,
+  playerId: null,
+  error: null,
+  gameOver: null,
+  opponentDisconnected: false,
+};
+
 export interface SocketState {
   connected: boolean;
   gameState: GameState | null;
   roomCode: string | null;
   playerId: string | null;
   error: string | null;
-  gameOver: { winner: string; players: GameState['players'] } | null;
+  gameOver: {
+    winner: string;
+    players: GameState['players'];
+    surrendered?: string;
+    opponentLeft?: boolean;
+  } | null;
   opponentDisconnected: boolean;
 }
 
 export function useSocket() {
   const socketRef = useRef<Socket | null>(null);
-  const [state, setState] = useState<SocketState>({
-    connected: false,
-    gameState: null,
-    roomCode: null,
-    playerId: null,
-    error: null,
-    gameOver: null,
-    opponentDisconnected: false,
-  });
+  const [state, setState] = useState<SocketState>(INITIAL_STATE);
+  // Track whether we were already in a session before a reconnect
+  const wasInGameRef = useRef(false);
 
   useEffect(() => {
-    const socket = io(SERVER_URL, { transports: ['websocket', 'polling'] });
+    const socket = io(SERVER_URL, {
+      transports: ['websocket', 'polling'],
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+    });
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      setState((s) => ({ ...s, connected: true, playerId: socket.id ?? null }));
+      setState((s) => {
+        // Reconnect while in an active session — server lost our socket, reset to lobby
+        if (wasInGameRef.current && (s.gameState !== null || s.roomCode !== null)) {
+          wasInGameRef.current = false;
+          return {
+            ...INITIAL_STATE,
+            connected: true,
+            playerId: socket.id ?? null,
+            error: 'Соединение прервалось. Начните новую игру.',
+          };
+        }
+        return { ...s, connected: true, playerId: socket.id ?? null };
+      });
     });
 
     socket.on('disconnect', () => {
-      setState((s) => ({ ...s, connected: false }));
+      setState((s) => {
+        if (s.gameState !== null || s.roomCode !== null) {
+          wasInGameRef.current = true;
+        }
+        return { ...s, connected: false };
+      });
     });
 
     socket.on('room_created', ({ code }: { code: string }) => {
+      wasInGameRef.current = true;
       setState((s) => ({ ...s, roomCode: code, error: null }));
     });
 
     socket.on('game_started', () => {
+      wasInGameRef.current = true;
       setState((s) => ({ ...s, gameOver: null, opponentDisconnected: false }));
     });
 
@@ -88,6 +120,7 @@ export function useSocket() {
 
   const leaveRoom = useCallback(() => {
     socketRef.current?.emit('leave_room');
+    wasInGameRef.current = false;
     setState((s) => ({
       ...s,
       gameState: null,

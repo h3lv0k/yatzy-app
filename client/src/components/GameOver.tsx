@@ -9,18 +9,36 @@ interface Props {
   onRematch: () => void;
   onLeave: () => void;
   error: string | null;
+  surrendered?: string;
+  opponentLeft?: boolean;
 }
 
-export const GameOver: React.FC<Props> = ({ winner, players, myId, onRematch, onLeave, error }) => {
+export const GameOver: React.FC<Props> = ({ winner, players, myId, onRematch, onLeave, error, surrendered, opponentLeft }) => {
   const iWon = winner === myId;
+  const iSurrendered = surrendered === myId;
   const winnerPlayer = players.find((p) => p.id === winner);
-  const [p1, p2] = players;
+
+  let resultTitle: string;
+  let resultIcon: string;
+  if (opponentLeft) {
+    resultTitle = 'Противник покинул игру';
+    resultIcon = '🏆';
+  } else if (iSurrendered) {
+    resultTitle = 'Вы сдались';
+    resultIcon = '🏳️';
+  } else if (iWon) {
+    resultTitle = 'Вы победили!';
+    resultIcon = '🏆';
+  } else {
+    resultTitle = 'Вы проиграли';
+    resultIcon = '😔';
+  }
 
   return (
     <div className="gameover">
       <div className="gameover-card">
-        <div className="result-icon">{iWon ? '🏆' : '😔'}</div>
-        <h2 className="result-title">{iWon ? 'Вы победили!' : 'Вы проиграли'}</h2>
+        <div className="result-icon">{resultIcon}</div>
+        <h2 className="result-title">{resultTitle}</h2>
         <p className="winner-name">{winnerPlayer?.name}</p>
 
         <div className="scores-final">
