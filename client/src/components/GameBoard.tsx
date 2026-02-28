@@ -28,22 +28,35 @@ export const GameBoard: React.FC<Props> = ({
   const currentPlayer = players[currentPlayerIndex];
   const isMyTurn = currentPlayer?.id === myId;
   const [rolling, setRolling] = useState(false);
+  const [waitingForRoll, setWaitingForRoll] = useState(false);
   const [prevDice, setPrevDice] = useState<number[]>(dice);
 
-  // Detect roll
+  // Detect roll — also clears the pending-roll lock
   useEffect(() => {
     if (JSON.stringify(dice) !== JSON.stringify(prevDice)) {
       setRolling(true);
+      setWaitingForRoll(false);
       setPrevDice(dice);
       const t = setTimeout(() => setRolling(false), 400);
       return () => clearTimeout(t);
     }
   }, [dice]);
 
+  // Clear waiting flag whenever it's no longer our turn (e.g. after scoring)
+  useEffect(() => {
+    if (!isMyTurn) setWaitingForRoll(false);
+  }, [isMyTurn]);
+
   const me = players.find((p) => p.id === myId);
   const opponent = players.find((p) => p.id !== myId);
 
-  const canRoll = isMyTurn && rollsLeft > 0 && phase === 'rolling';
+  const canRoll = isMyTurn && rollsLeft > 0 && phase === 'rolling' && !waitingForRoll;
+
+  const handleRoll = () => {
+    if (!canRoll) return;
+    setWaitingForRoll(true);
+    onRoll();
+  };
 
   const rollsLabel = rollsLeft === 3
     ? 'Ваш ход — бросьте кубики!'
@@ -100,7 +113,7 @@ export const GameBoard: React.FC<Props> = ({
         {isMyTurn && (
           <button
             className={`roll-btn ${!canRoll ? 'roll-btn--disabled' : ''}`}
-            onClick={canRoll ? onRoll : undefined}
+            onClick={handleRoll}
             disabled={!canRoll}
           >
             {rollsLeft === 0 ? '🎯 Выберите категорию' : `🎲 Бросить (${rollsLeft} осталось)`}
