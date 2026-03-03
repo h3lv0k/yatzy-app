@@ -63,7 +63,7 @@ export const ScoreCard: React.FC<Props> = ({
         {players.map((p) =>
           p.id === player.id ? (
             <td key={p.id} className={`cell ${hasBonus ? 'cell--bonus' : ''}`}>
-              {hasBonus ? '+35' : `-${remaining}`}
+              {hasBonus ? '+35' : `ещё ${remaining}`}
             </td>
           ) : null
         )}
@@ -112,7 +112,7 @@ export const ScoreCard: React.FC<Props> = ({
             <td className="cat-label">Бонус (+35 если ≥63)</td>
             {players.map((p) => (
               <td key={p.id} className={`cell ${p.upperBonus ? 'cell--bonus' : ''}`}>
-                {p.upperBonus ? '+35' : `−${Math.max(0, 63 - computeUpperTotal(p.scores))} до`}
+                {p.upperBonus ? '+35' : `ещё ${Math.max(0, 63 - computeUpperTotal(p.scores))}`}
               </td>
             ))}
           </tr>

@@ -1,5 +1,11 @@
 import React from 'react';
 import './Die.css';
+import d1 from '../assets/icons/d1.png';
+import d2 from '../assets/icons/d2.png';
+import d3 from '../assets/icons/d3.png';
+import d4 from '../assets/icons/d4.png';
+import d5 from '../assets/icons/d5.png';
+import d6 from '../assets/icons/d6.png';
 
 interface Props {
   value: number;
@@ -9,30 +15,21 @@ interface Props {
   rolling?: boolean;
 }
 
-const DOTS: Record<number, [number, number][]> = {
-  1: [[50, 50]],
-  2: [[25, 25], [75, 75]],
-  3: [[25, 25], [50, 50], [75, 75]],
-  4: [[25, 25], [75, 25], [25, 75], [75, 75]],
-  5: [[25, 25], [75, 25], [50, 50], [25, 75], [75, 75]],
-  6: [[25, 20], [75, 20], [25, 50], [75, 50], [25, 80], [75, 80]],
-};
+const DICE_IMAGES: Record<number, string> = { 1: d1, 2: d2, 3: d3, 4: d4, 5: d5, 6: d6 };
 
 export const Die: React.FC<Props> = ({ value, held, canHold, onToggle, rolling }) => {
-  const dots = DOTS[value] || [];
-
   return (
     <button
       className={`die ${held ? 'die--held' : ''} ${!canHold ? 'die--disabled' : ''} ${rolling ? 'die--rolling' : ''}`}
       onClick={canHold ? onToggle : undefined}
       aria-label={`Кубик ${value}${held ? ' (зафиксирован)' : ''}`}
     >
-      <svg viewBox="0 0 100 100" width="100%" height="100%">
-        <rect rx="12" ry="12" width="100" height="100" className="die-body" />
-        {dots.map(([cx, cy], i) => (
-          <circle key={i} cx={cx} cy={cy} r="9" className="die-dot" />
-        ))}
-      </svg>
+      <img
+        src={DICE_IMAGES[value]}
+        alt={`${value}`}
+        className="die-img"
+        draggable={false}
+      />
       {held && <span className="die-label">Держу</span>}
     </button>
   );
